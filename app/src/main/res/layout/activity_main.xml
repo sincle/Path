@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context="com.haieros.path.MainActivity">
 
-    <com.haieros.path.path.PathThrBezierCurve
+    <com.haieros.path.path.PathFillType
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="#11000000"
