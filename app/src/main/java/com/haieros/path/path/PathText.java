@@ -96,13 +96,19 @@ public class PathText extends CoordinateView {
 
     private void drawHead(Canvas canvas) {
         float[] pos = new float[2];
-        float[] tan = new float[2]; //tan[0] 临边  tan[1] 对边 tan X = tan[0] / tan[1]
-        //设置
-        destMeasure.setPath(mDest,false);
-        boolean posTan = pathMeasure.getPosTan(totalLength * animatedValue, pos, tan);
-        Log.e("kang", "result:"+posTan+",pos[0]:"+pos[0]+",pos[1]:"+pos[1]+"------:tan[0]:"+tan[0]+",tan[1]:"+tan[1]);
-        float degree = (float) (Math.atan2(tan[1], tan[0]));
-        Log.e("kang", "degree:"+degree);
+        float[] tan = new float[2]; //tan X = tan[0] / tan[1]
+        //获取指定distance距离的 tan 和 pos distance 在 每一段 path的范围(0,path.getLength()) 之间,所以此处要减去之前的 length和
+        boolean posTan = pathMeasure.getPosTan(animatedValue * totalLength - otherLength, pos, tan);
+        Log.e("kang", "result:" + posTan + ",pos[0]:" + pos[0] + ",pos[1]:" + pos[1] + "------:tan[0]:" + tan[0] + ",tan[1]:" + tan[1]);
+        float degree = (float) ((float) (Math.atan2(tan[1], tan[0]) * 180) / Math.PI);
+        Log.e("kang", "degree:" + degree);
+        Path path = new Path();
+        path.moveTo(pos[0], pos[1]);
+        float x = (float) (150 * Math.cos(Math.atan2(tan[1], tan[0])));
+        float y = (float) (150 * Math.sin(Math.atan2(tan[1], tan[0])));
+        Log.e("kang", "x:" + x + ",y:" + y);
+        path.lineTo(pos[0] + x, pos[1] + y);
+        canvas.drawPath(path, mPathPaint);
     }
 
     public void initAnimator() {
@@ -119,15 +125,16 @@ public class PathText extends CoordinateView {
         });
     }
 
-    public void start(){
+    public void start() {
         mDest.reset();
         pathMeasure.setPath(path, true);
         clear();
-        if(valueAnimator.isRunning()) {
+        if (valueAnimator.isRunning()) {
             valueAnimator.cancel();
         }
         valueAnimator.start();
     }
+
     private void anim(float animatedValue) {
         //限制长度
         float limitLength = pathMeasure.getLength() + otherLength;
@@ -145,12 +152,12 @@ public class PathText extends CoordinateView {
             if (limitLength - destLength < end - start) {
                 more = (end - start) - (limitLength - destLength);
                 end = start + limitLength - destLength;
-                Log.i("kang", "最后一次需要补偿:"+more);
+                Log.i("kang", "最后一次需要补偿:" + more);
             }  //获取start - end 段内的path
 //            Log.d("kang","start:"+start+",end:"+end+",result:"+(end - start));
             pathMeasure.getSegment(start, end, mDest, true);
 
-            if(animatedValue == 1.0f) {
+            if (animatedValue == 1.0f) {
                 //补偿最后一次
                 pathMeasure.getSegment(0, more, mDest, true);
             }
@@ -160,9 +167,9 @@ public class PathText extends CoordinateView {
 //            Log.e("kang1", "otherLength:" + otherLength);
             //下一段path
             pathMeasure.nextContour();
-            Log.i("kang", "每段结束后需要补偿:"+more+"");
+            Log.i("kang", "每段结束后需要补偿:" + more + "");
             //补偿 进入else操作后 animatedValue变化导致的
-            if(more != 0f) {
+            if (more != 0f) {
                 pathMeasure.getSegment(0, more, mDest, true);
                 more = 0f;
             }
